@@ -1,0 +1,80 @@
+\documentclass[11pt,a4paper]{article}
+
+\setlength{\parindent}{0pt}
+
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{animate} % for animated figures
+
+\usepackage[font=scriptsize,figurename=Abb.,labelfont={it}]{caption}
+
+\newcommand{\sectionbreak}{\clearpage}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+<<functionDef, echo=FALSE,eval=TRUE>>=
+x.values <- seq(0,10,by=0.01)
+y.values <- 0.2*sin(x.values)*x.values
+@
+
+<<Stepfunction1, echo=FALSE, eval=TRUE, fig=TRUE>>=
+n <- 4
+n.interval <- 2*n*2^n
+y.intervals <- matrix(NA, nrow=n.interval+1)
+for (i in 1:(n.interval+1)){
+  y.intervals[i] <- -n+(i-1)*2^-n
+}
+
+y.values.boxed <- matrix(NA, nrow=length(y.values))
+for (i in 1:length(y.values)){
+  if (y.values[i] <= y.intervals[1]){
+    y.values.boxed[i] <- y.intervals[1]
+  }
+  if (y.values[i] > y.intervals[2*n*2^n+1]){
+    y.values.boxed[i] <- y.intervals[2*n*2^n+1]
+  }
+  for (j in 1:n.interval){
+    if (y.intervals[j] < y.values[i] & y.values[i]<=y.intervals[j+1]){
+      y.values.boxed[i] <- y.intervals[j]
+      break
+    }
+  }
+}
+
+values.ext <- matrix(NA, nrow=2*length(x.values)-1,ncol=2)
+values.ext[,1] <- c(x.values,x.values[-1])
+values.ext[,2] <- c(y.values.boxed, y.values.boxed[-length(y.values.boxed)])
+values.ext <- values.ext[order(values.ext[,1], decreasing=T),]
+values.ext <- values.ext[nrow(values.ext):1,]
+indices <- matrix(TRUE, nrow=nrow(values.ext))
+for (i in 2: (nrow(values.ext)-1)){
+  if (values.ext[i,2]==values.ext[i-1,2] && values.ext[i,2]==values.ext[i+1,2])
+    indices[i] <- FALSE
+}
+values.ext <- values.ext[indices,]
+
+x.left <- x.right <- values.ext[,1]
+x.left <- x.right[-length(x.right)]
+x.right <- x.right[-1]
+y.bottom <- apply(as.matrix(values.ext[,2]), 1, function(x) {min(x,0)})
+y.bottom <- y.bottom[-length(y.bottom)]
+y.top <- apply(as.matrix(values.ext[,2]), 1, function(x) {max(x,0)})
+y.top <- y.top[-1]
+plot(x.values, y.values, typ="l")
+abline(h=0)
+rect(x.left, y.bottom, x.right, y.top, col="aquamarine", density=-1)
+points(x.values, y.values, typ="l")
+points(values.ext,typ="l",col=2)
+@
+
+
+
+\end{document}
